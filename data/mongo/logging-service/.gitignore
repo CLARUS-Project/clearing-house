@@ -3,6 +3,7 @@
 *.lock
 storage.bson
 WiredTiger.*
+WiredTiger
 .mongodb/
 diagnostic.data/
 journal/
