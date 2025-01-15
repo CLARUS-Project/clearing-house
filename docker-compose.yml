@@ -1,0 +1,98 @@
+version: "3"
+services:
+
+  tc-core:
+    container_name: tc-core
+    image: fraunhoferaisec/trusted-connector-core:6.3.0
+    tty: true
+    stdin_open: true
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+        - ./data/trusted-connector/allow-all-flows.pl:/root/deploy/allow-all-flows.pl
+        - ./data/trusted-connector/keystore.p12:/root/etc/keystore.p12
+        - ./data/trusted-connector/truststore.p12:/root/etc/truststore.p12
+        - ./data/trusted-connector/clearing-house-processors-0.8.0.jar:/root/jars/clearing-house-processors.jar
+        - ./data/trusted-connector/routes/clearing-house-routes.xml:/root/deploy/clearing-house-routes.xml
+    environment:
+        TC_DAPS_URL: https://daps.mvds-clarus.eu/auth
+        TC_CH_ISSUER_CONNECTOR: https://clearing-house.mvds-clarus.eu
+        TC_CH_AGENT: "http://sender.agent.com"
+    ports:
+        - "9443:8443"
+        - "9999:9999"
+        - "29292:29292"
+        - "9080:8080"
+
+  logging-service-mongo:
+    container_name: logging-service-mongo
+    image: mongo:latest
+    environment: 
+        MONGO_INITDB_DATABASE: process
+    ports:
+      - "27017:27017"
+    volumes:
+        - ./data/mongo/logging-service:/data/db
+        
+  logging-service:
+    container_name: logging-service
+    image: clarusproject/clearing-house_logging-service:latest
+    depends_on:
+      - document-api
+      - keyring-api
+      - logging-service-mongo
+    environment:
+    # Allowed levels: Off, Error, Warn, Info, Debug, Trace
+      - API_LOG_LEVEL=Warn
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/Rocket.toml:/server/Rocket.toml
+      - ./data/keys:/server/keys
+      - ./data/certs:/server/certs
+      
+  document-mongo:
+    container_name: document-mongo
+    image: mongo:latest
+    environment: 
+        MONGO_INITDB_DATABASE: document
+    volumes:
+        - ./data/mongo/document-service:/data/db
+
+
+  document-api:
+    container_name: document-api
+    image: clarusproject/clearing-house_document-api:latest
+    depends_on:
+      - keyring-api
+      - document-mongo
+    environment:
+        # Allowed levels: Off, Error, Warn, Info, Debug, Trace
+      - API_LOG_LEVEL=Warn
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data/document-api/Rocket.toml:/server/Rocket.toml
+      - ./data/certs:/server/certs
+      
+  keyring-mongo:
+    container_name: keyring-mongo
+    image: mongo:latest
+    environment: 
+        MONGO_INITDB_DATABASE: keyring
+    volumes:
+        - ./data/mongo/keyring-service:/data/db
+        
+  keyring-api:
+    container_name: keyring-api
+    image: clarusproject/clearing-house_keyring-api:latest
+    depends_on:
+      - keyring-mongo
+    environment:
+        # Allowed levels: Off, Error, Warn, Info, Debug, Trace
+      - API_LOG_LEVEL=Warn
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./data/keyring-api/init_db:/server/init_db
+      - ./data/keyring-api/Rocket.toml:/server/Rocket.toml
+      - ./data/certs:/server/certs

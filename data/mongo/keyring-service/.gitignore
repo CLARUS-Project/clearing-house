@@ -1,0 +1,8 @@
+.bash_history
+*.wt
+*.lock
+storage.bson
+WiredTiger.*
+.mongodb/
+diagnostic.data/
+journal/
