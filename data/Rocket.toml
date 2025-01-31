@@ -2,9 +2,9 @@
 limits = { json = 5242880 }
 #daps_api_url = "https://daps.aisec.fraunhofer.de/v2"
 daps_api_url = "https://daps.mvds-clarus.eu"
-connector_name = "https://clearinghouse.mvds-clarus.eu/"
+connector_name = "https://clearing-house.mvds-clarus.eu/"
 infomodel_version = "4.0.0"
-server_agent = "https://clearinghouse.mvds-clarus.eu"
+server_agent = "https://clearing-house.mvds-clarus.eu"
 signing_key = "keys/private_key.der"
 
 [debug]
